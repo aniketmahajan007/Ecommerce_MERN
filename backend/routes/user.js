@@ -2,7 +2,7 @@ import express from "express";
 
 export const router = express.Router();
 
-import {sayHi} from "../controller/user.js";
+import {signup} from "../controller/signup.js";
 
-router.get('/',sayHi);
+router.post('/signup',signup);
 
