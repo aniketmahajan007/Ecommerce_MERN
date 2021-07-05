@@ -8,7 +8,6 @@ import {router} from "./routes/user.js";
 
 const app = express();
 
-
 //DB
 mongoose.connect(config().parsed.DATABASE,{
     useNewUrlParser: true,
