@@ -1,23 +1,12 @@
 import express from "express";
-export const router = express.Router();
-import {signup} from "../controller/user/signup.js";
-import {userSignupvalidator} from "../validator/index.js";
-import signin from "../controller/user/signin.js";
-import signout from "../controller/user/signout.js";
+import {isAdmin, isAuth, signin_checker} from "../controller/auth.js";
+import {userById} from "../controller/user.js";
 
-router.post(`/signup`,async (req,res)=>{
-    try{
-        await userSignupvalidator(req.body)
-            .then(()=>{
-                //database
-                signup(req,res);
-            });
-    }catch (e){
-        res.status(400).json({
-            'Error': e
-        })
-    }
+export const routers = express.Router();
+
+routers.get('/secret/:userid',signin_checker,userById,isAdmin,(req,res)=>{
+    res.status(200).json({
+        user:req.profile
+    });
 });
-router.post(`/signin`, signin);
-router.get(`/signout`, signout);
 
