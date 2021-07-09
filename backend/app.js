@@ -8,6 +8,7 @@ import {router as auth_router} from "./routes/auth.js";
 import {routers as user_router} from "./routes/user.js";
 import {router as category_router} from "./routes/category.js";
 import {router as product_router} from "./routes/product.js";
+import cors from 'cors';
 
 const app = express();
 
@@ -19,10 +20,12 @@ mongoose.connect(config().parsed.DATABASE,{
 })
     .then(()=>{console.log('Database Connected')});
 
-// Routes
+// Middleware
 app.use(morgon('dev'));
 app.use(bodyParser.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use(cors());
+//Routes
 app.use('/api',auth_router);
 app.use('/api',user_router);
 app.use('/api',category_router);

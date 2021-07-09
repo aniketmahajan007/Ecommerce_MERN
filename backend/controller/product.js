@@ -69,7 +69,6 @@ export function removeProduct(req,res){
 }
 
 export function updateProduct(req,res){
-    console.log('update process begin:');
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
     form.parse(req, (err, fields, files)=> {
@@ -81,9 +80,7 @@ export function updateProduct(req,res){
         Product_validator(fields,files)
             .then(()=>{
                 let product = new Product(req.product);
-                console.log(product);
                 product = _.extend(product,fields);
-                console.log(product);
                 if(files.photo){
                     product.photo.data = fs.readFileSync(files.photo.path);
                     product.photo.contentType = files.photo.type;
@@ -103,4 +100,122 @@ export function updateProduct(req,res){
             })
         })
     });
+}
+
+export function list_product(req,res){
+    const order = req.query.order ? req.query.order : 'asc';
+    const sortby = req.query.sortby ? req.query.sortby : '_id';
+    const limit = req.query.limit ? parseInt(req.query.limit) : 6;
+    // Validation
+    if(order ==="asc" || order === "desc"){}else{
+        return res.status(400).json({
+            error:'Bad Request'
+        })
+    }
+    if(sortby === "createdAt" || sortby === "_id"){}else{
+        return res.status(400).json({
+            error:'Bad Request'
+        })
+    }
+    if(limit<1 || limit > 50){
+        return res.status(400).json({
+            error:'Bad Request'
+        })
+    }
+    // Get data
+    Product.find()
+        .select("-photo")
+        .populate('category')
+        .sort([[sortby,order]])
+        .limit(limit)
+        .exec((err, result) => {
+            if(err || !result){
+                return res.status(400).json({
+                    error: 'Product not found'
+                });
+            }
+            res.json(result);
+        })
+}
+
+export function related_product(req,res){
+    const limit = req.query.limit ? parseInt(req.query.limit) : 6;
+    if(limit<1 || limit > 50){
+        return res.status(400).json({
+            error:'Bad Request'
+        })
+    }
+    Product.find({_id:{$ne: req.product}, category: req.product.category})
+        .limit(limit)
+        .select('-photo')
+        .populate('category','_id name')
+        .exec((err,result) => {
+            if(err || !result){
+                return res.status(400).json({
+                    error:'Product not found'
+                })
+            }
+            res.json(result);
+        });
+}
+
+export function listCategories(req,res){
+    Product.distinct('category',{},(err,result) => {
+        if(err || !result){
+            return res.status(400).json({
+                error:'Product not found'
+            })
+        }
+        res.json(result);
+    });
+}
+
+export function ListbySearch (req,res){
+    const order = req.body.order ? req.body.order : "desc";
+    const sortby = req.body.sortby ? req.body.sortby : "_id";
+    const limit = req.query.limit ? parseInt(req.query.limit) : 6;
+    const skip = parseInt(req.body.skip);
+    const findArgs = {};
+    for(let key in req.body.filters){
+        if(req.body.filters[key].length > 0){
+            if(key === "price"){
+                findArgs[key] = {
+                    $gte: req.body.filters[key][0],
+                    $lte: req.body.filters[key][1],
+                }
+            }else{
+                findArgs[key] = req.body.filters[key];
+            }
+        }
+    }
+
+    Product.find(findArgs)
+        .select('-photo')
+        .populate('category')
+        .sort([[sortby,order]])
+        .skip(skip)
+        .limit(limit)
+        .exec((err,result) => {
+            if(err || !result){
+                return res.status(400).json({
+                    error:'Product not found'
+                })
+            }
+            res.json({
+                size: result.length,
+                data: result
+            })
+        });
+}
+
+export function product_photo(req,res,next){
+    if(req.product.photo.data){
+        res.set('Content-type',req.product.photo.contentType);
+        return res.send(req.product.photo.data);
+        next();
+    }else{
+        return res.status(400).json({
+            error:'Product not found'
+        });
+    }
 }
