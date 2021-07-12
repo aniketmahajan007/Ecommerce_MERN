@@ -1,5 +1,5 @@
 # Ecommerce_MERN
-Easily deploy ecommerce site in a minute within a minute.
+Easily deploy ecommerce site within a minute.
 
 Also supports admin features to add product, category, etc.
 
